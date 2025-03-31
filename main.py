@@ -1,4 +1,4 @@
-from modelo import simular_resorte
+from modelo import simular_resorte, calcular_equilibrio
 
 def main():
     try:
@@ -10,7 +10,15 @@ def main():
         print("Error: Por favor ingrese valores numericos validos.")
         return
 
-    simular_resorte(L0, k, m, c)
+    resultados = simular_resorte(L0, k, m, c)
+
+    print("\nTiempo (s)\tPosicion (m)")
+    for t, x in resultados:
+        print("{:.2f}\t\t{:.4f}".format(t, x))
+
+    x_equilibrio_teorico = calcular_equilibrio(L0, k, m)
+    print("\nPunto de equilibrio teorico (m): {:.4f}".format(x_equilibrio_teorico))
+    print("Punto de equilibrio simulacion (m): {:.4f}".format(resultados[-1][1]))
 
 if __name__ == '__main__':
     main()

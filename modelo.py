@@ -1,6 +1,4 @@
-def simular_resorte(L0, k, m, c):
-    print("Simulacion de un resorte\n")
-    
+def simular_resorte(L0, k, m, c):    
     dt = 0.01 # paso de tiempo (s)
     g = 9.81 # aceleración de la gravedad (m/s²)
 
@@ -9,22 +7,29 @@ def simular_resorte(L0, k, m, c):
     x = L0   # posicion inicial: resorte sin carga
     v = 0.0  # velocidad inicial
 
-    print("\nTiempo (s)\tPosicion (m)\tVelocidad (m/s)\tAceleracion (m/s²)")
+    resultados = []  # [tiempo, posicion]
     
     while True:
+        # aceleracion
         a = (m * g - k * (x - L0) - c * v) / m
         
+        # velocidad
         v = v + a * dt
+        # posicion
         x_new = x + v * dt
+
         t = t + dt
         
-        print("{:.2f}\t\t{:.4f}\t\t{:.4f}\t\t{:.4f}".format(t, x_new, v, a))
+        resultados.append((t, x_new))
         
         if round(x_new, 8) == round(x, 8):
             break
         
         x = x_new
 
+    return resultados
+
+def calcular_equilibrio(L0, k, m):
+    g = 9.81  # aceleración de la gravedad (m/s²)
     x_equilibrio_teorico = L0 + (m * g) / k
-    print("\nPunto de equilibrio teorico (m): {:.4f}".format(x_equilibrio_teorico))
-    print("Punto de equilibrio simulacion (m): {:.4f}".format(x_new))
+    return x_equilibrio_teorico
