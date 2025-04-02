@@ -1,1 +1,1 @@
-Simulador de un resorte usando Python.
+Simulador de un resorte.
