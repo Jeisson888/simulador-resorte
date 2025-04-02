@@ -15,6 +15,31 @@
             flex-direction: row; /* Controles al lado del render */
             height: 100vh;
         }
+
+        #ruler {
+            width: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding-top: 50px;
+            position: relative;
+        }
+        .ruler-mark {
+            width: 100%;
+            height: 1px;
+            background: black;
+            margin: 25px 0;
+            position: relative;
+        }
+        .ruler-label {
+            position: absolute;
+            left: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+        }
         #rendererContainer {
             flex: 3; /* Ocupa más espacio que los controles */
             width: 100%;
@@ -72,11 +97,12 @@
     </style>
 </head>
 <body>
+
     <div id="controls">
         <div class="control-group">
             <label for="L0Input">Longitud sin carga (L0):</label>
-            <input type="range" id="L0Input" min="0.1" max="5" value="0.5" step="0.1">
-            <span id="L0Value">0.5</span>
+            <input type="range" id="L0Input" min="0.6" max="5" value="0.6" step="0.1">
+            <span id="L0Value"> 0.6</span>
         </div>
         <div class="control-group">
             <label for="kInput">Constante del resorte (k):</label>
@@ -93,26 +119,29 @@
             <input type="range" id="cInput" min="0.1" max="10" value="1" step="0.1">
             <span id="cValue">1</span>
         </div>
-        <div class="control-group">
-            <label for="turnsInput">Vueltas:</label>
-            <input type="range" id="turnsInput" min="1" max="20" value="10" step="1">
-            <span id="turnsValue">10</span>
-        </div>
+
         <div class="button-group">
             <button id="startButton">Iniciar Simulación</button>
             <button id="stopButton">Detener Simulación</button>
             <button id="resetButton">Reiniciar Valores</button>
         </div>
+
+        <div class="control-group">
+            <label>Altura total del resorte:</label>
+            <span id="springHeightValue">0</span>
+        </div>
+
     </div>
+    <div id="ruler"></div>
     <div id="rendererContainer"></div>
     <script>
         let scene, camera, renderer, spring, animationId;
-        let L0 = 0.5, k = 50, m = 1, c = 1, turns = 10;
+        let L0 = 0.6, k = 50, m = 1, c = 1, turns = 2, separation = 0.3;
 
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.2, 100);
-            camera.position.set(0, -3, 16); // Ajustar la cámara para centrar el resorte en la parte superior
+            camera.position.set(1.2, -3.1, 16); 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setClearColor(0xa8edea, 1); // Fondo claro
@@ -126,16 +155,38 @@
             scene.add(light);
 
             updateSpring();
+            createRuler();
 
             // Renderizar la escena una vez para mostrar el resorte quieto
             renderer.render(scene, camera);
         }
 
+
+        function calculateHeightUp(){
+            nSeparation=L0/turns;
+            if (0.3 > nSeparation | 0.6 < nSeparation){
+                turns = turns + 1;
+            }else{
+                separation = nSeparation;
+            }
+        }
+
+        function calculateHeightDown(){
+            nSeparation=L0/turns;
+            if (0.3 > nSeparation | 0.6 < nSeparation){
+                turns = turns -1;
+            }else{
+                separation = nSeparation;
+            }
+        }
+
         function createSpring(radius = 1, segments = 100) {
-            const height = L0; // Ajusta la altura total según L0
+            const height = turns * separation; // Ajusta la altura total según L0
+
+            document.getElementById("springHeightValue").innerText = height.toFixed(2);
             const path = new THREE.Curve();
             path.getPoint = function (t) {
-                const angle = (t * turns * Math.PI * 2);
+                const angle = (t * turns * Math.PI * 2)+1.5;
                 return new THREE.Vector3(
                     radius * Math.cos(angle),
                     -t * height,
@@ -153,7 +204,7 @@
             if (spring) scene.remove(spring);
             spring = createSpring();
             scene.add(spring);
-            renderer.render(scene, camera); // Renderizar después de añadir el resorte
+            renderer.render(scene, camera); 
         }
 
         function animate() {
@@ -185,8 +236,15 @@
         }
 
         document.getElementById("L0Input").addEventListener("input", function () {
-            L0 = parseFloat(this.value);
-            document.getElementById("L0Value").innerText = L0;
+            nL0 = parseFloat(this.value);
+            document.getElementById("L0Value").innerText = nL0;
+            if(nL0 > L0){
+                L0=nL0
+                calculateHeightUp();
+            }else{
+                L0=nL0
+                calculateHeightDown();
+            }
             updateSpring();
         });
 
@@ -205,11 +263,7 @@
             document.getElementById("cValue").innerText = c;
         });
 
-        document.getElementById("turnsInput").addEventListener("input", function () {
-            turns = parseInt(this.value);
-            document.getElementById("turnsValue").innerText = turns;
-            updateSpring();
-        });
+
 
         document.getElementById("startButton").addEventListener("click", function () {
             animate();
@@ -228,6 +282,19 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        function createRuler() {
+            const ruler = document.getElementById("ruler");
+            for (let i = 0; i <= 10; i++) {
+                const mark = document.createElement("div");
+                mark.classList.add("ruler-mark");
+                const label = document.createElement("div");
+                label.classList.add("ruler-label");
+                label.innerText = (10 - i) * 0.5 + "cm";
+                mark.appendChild(label);
+                ruler.appendChild(mark);
+            }
+        }
 
         init();
     </script>
