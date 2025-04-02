@@ -1,302 +1,363 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Resorte</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        body {
-            background: linear-gradient(135deg, #a8edea, #fed6e3); /* Fondo degradado */
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            flex-direction: row; /* Controles al lado del render */
-            height: 100vh;
-        }
-
-        #ruler {
-            width: 50px;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            padding-top: 50px;
-            position: relative;
-        }
-        .ruler-mark {
-            width: 100%;
-            height: 1px;
-            background: black;
-            margin: 25px 0;
-            position: relative;
-        }
-        .ruler-label {
-            position: absolute;
-            left: 5px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #333;
-        }
-        #rendererContainer {
-            flex: 3; /* Ocupa más espacio que los controles */
-            width: 100%;
-        }
-        #controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 20px; /* Espaciado entre elementos */
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            width: 300px;
-            height: 100%; /* Asegura que ocupe toda la altura */
-        }
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-        .control-group label {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        .control-group input[type="range"] {
-            width: 100%;
-        }
-        .button-group {
-            display: flex;
-            justify-content: center;
-            gap: 10px; /* Espaciado entre botones */
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: bold;
-            color: #ffffff;
-            background-color: #007bff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:active {
-            background-color: #003f7f;
-        }
-    </style>
-</head>
-<body>
-
-    <div id="controls">
-        <div class="control-group">
-            <label for="L0Input">Longitud sin carga (L0):</label>
-            <input type="range" id="L0Input" min="0.6" max="5" value="0.6" step="0.1">
-            <span id="L0Value"> 0.6</span>
-        </div>
-        <div class="control-group">
-            <label for="kInput">Constante del resorte (k):</label>
-            <input type="range" id="kInput" min="10" max="100" value="50" step="5">
-            <span id="kValue">50</span>
-        </div>
-        <div class="control-group">
-            <label for="mInput">Masa (m):</label>
-            <input type="range" id="mInput" min="0.1" max="10" value="1" step="0.1">
-            <span id="mValue">1</span>
-        </div>
-        <div class="control-group">
-            <label for="cInput">Coeficiente de amortiguamiento (c):</label>
-            <input type="range" id="cInput" min="0.1" max="10" value="1" step="0.1">
-            <span id="cValue">1</span>
-        </div>
-
-        <div class="button-group">
-            <button id="startButton">Iniciar Simulación</button>
-            <button id="stopButton">Detener Simulación</button>
-            <button id="resetButton">Reiniciar Valores</button>
-        </div>
-
-        <div class="control-group">
-            <label>Altura total del resorte:</label>
-            <span id="springHeightValue">0</span>
-        </div>
-
-    </div>
-    <div id="ruler"></div>
-    <div id="rendererContainer"></div>
-    <script>
-        let scene, camera, renderer, spring, animationId;
-        let L0 = 0.6, k = 50, m = 1, c = 1, turns = 2, separation = 0.3;
-
-        function init() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.2, 100);
-            camera.position.set(1.2, -3.1, 16); 
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setClearColor(0xa8edea, 1); // Fondo claro
-            document.getElementById("rendererContainer").appendChild(renderer.domElement);
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
-
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(5, 5, 5);
-            scene.add(light);
-
-            updateSpring();
-            createRuler();
-
-            // Renderizar la escena una vez para mostrar el resorte quieto
-            renderer.render(scene, camera);
-        }
-
-
-        function calculateHeightUp(){
-            nSeparation=L0/turns;
-            if (0.3 > nSeparation | 0.6 < nSeparation){
-                turns = turns + 1;
-            }else{
-                separation = nSeparation;
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Simulador de Resorte</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        <style>
+            body {
+                background: linear-gradient(135deg, #a8edea, #fed6e3); /* Fondo degradado */
+                margin: 0;
+                overflow: hidden;
+                font-family: 'Arial', sans-serif;
+                display: flex;
+                flex-direction: row; /* Controles al lado del render */
+                height: 100vh;
             }
-        }
 
-        function calculateHeightDown(){
-            nSeparation=L0/turns;
-            if (0.3 > nSeparation | 0.6 < nSeparation){
-                turns = turns -1;
-            }else{
-                separation = nSeparation;
+            #ruler {
+                width: 50px;
+                background: rgba(255, 255, 255, 0.9);
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: center;
+                padding-top: 50px;
+                position: relative;
             }
-        }
-
-        function createSpring(radius = 1, segments = 100) {
-            const height = turns * separation; // Ajusta la altura total según L0
-
-            document.getElementById("springHeightValue").innerText = height.toFixed(2);
-            const path = new THREE.Curve();
-            path.getPoint = function (t) {
-                const angle = (t * turns * Math.PI * 2)+1.5;
-                return new THREE.Vector3(
-                    radius * Math.cos(angle),
-                    -t * height,
-                    radius * Math.sin(angle)
-                );
-            };
-
-            const geometry = new THREE.TubeGeometry(path, segments, 0.1, 10, false);
-            const material = new THREE.MeshStandardMaterial({ color: 0x007bff });
-            const springMesh = new THREE.Mesh(geometry, material);
-            return springMesh;
-        }
-
-        function updateSpring() {
-            if (spring) scene.remove(spring);
-            spring = createSpring();
-            scene.add(spring);
-            renderer.render(scene, camera); 
-        }
-
-        function animate() {
-            animationId = requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-
-        function stopAnimation() {
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-                animationId = null;
+            .ruler-mark {
+                width: 100%;
+                height: 1px;
+                background: black;
+                margin: 25px 0;
+                position: relative;
             }
-        }
-
-        function resetValues() {
-            // Reiniciar valores iniciales
-            L0 = 0.5; k = 50; m = 1; c = 1; turns = 10;
-            document.getElementById("L0Input").value = L0;
-            document.getElementById("L0Value").innerText = L0;
-            document.getElementById("kInput").value = k;
-            document.getElementById("kValue").innerText = k;
-            document.getElementById("mInput").value = m;
-            document.getElementById("mValue").innerText = m;
-            document.getElementById("cInput").value = c;
-            document.getElementById("cValue").innerText = c;
-            document.getElementById("turnsInput").value = turns;
-            document.getElementById("turnsValue").innerText = turns;
-            updateSpring();
-        }
-
-        document.getElementById("L0Input").addEventListener("input", function () {
-            nL0 = parseFloat(this.value);
-            document.getElementById("L0Value").innerText = nL0;
-            if(nL0 > L0){
-                L0=nL0
-                calculateHeightUp();
-            }else{
-                L0=nL0
-                calculateHeightDown();
+            .ruler-label {
+                position: absolute;
+                left: 5px;
+                font-size: 12px;
+                font-weight: bold;
+                color: #333;
             }
-            updateSpring();
-        });
-
-        document.getElementById("kInput").addEventListener("input", function () {
-            k = parseFloat(this.value);
-            document.getElementById("kValue").innerText = k;
-        });
-
-        document.getElementById("mInput").addEventListener("input", function () {
-            m = parseFloat(this.value);
-            document.getElementById("mValue").innerText = m;
-        });
-
-        document.getElementById("cInput").addEventListener("input", function () {
-            c = parseFloat(this.value);
-            document.getElementById("cValue").innerText = c;
-        });
-
-
-
-        document.getElementById("startButton").addEventListener("click", function () {
-            animate();
-        });
-
-        document.getElementById("stopButton").addEventListener("click", function () {
-            stopAnimation();
-        });
-
-        document.getElementById("resetButton").addEventListener("click", function () {
-            resetValues();
-        });
-
-        window.addEventListener("resize", () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        function createRuler() {
-            const ruler = document.getElementById("ruler");
-            for (let i = 0; i <= 10; i++) {
-                const mark = document.createElement("div");
-                mark.classList.add("ruler-mark");
-                const label = document.createElement("div");
-                label.classList.add("ruler-label");
-                label.innerText = (10 - i) * 0.5 + "cm";
-                mark.appendChild(label);
-                ruler.appendChild(mark);
+            #rendererContainer {
+                flex: 3; /* Ocupa más espacio que los controles */
+                width: 100%;
             }
-        }
+            #controls {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 20px; /* Espaciado entre elementos */
+                background: rgba(255, 255, 255, 0.9);
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                width: 300px;
+                height: 100%; /* Asegura que ocupe toda la altura */
+            }
+            .control-group {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            .control-group label {
+                font-size: 14px;
+                font-weight: bold;
+                color: #333;
+                margin-bottom: 5px;
+            }
+            .control-group input[type="range"] {
+                width: 100%;
+            }
+            .button-group {
+                display: flex;
+                justify-content: center;
+                gap: 10px; /* Espaciado entre botones */
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+                font-weight: bold;
+                color: #ffffff;
+                background-color: #007bff;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            button:active {
+                background-color: #003f7f;
+            }
+        </style>
+    </head>
+    <body>
 
-        init();
-    </script>
-</body>
-</html>
+        <div id="controls">
+            <div class="control-group">
+                <label for="L0Input">Longitud sin carga (L0):</label>
+                <input type="range" id="L0Input" min="0.66" max="5" value="0.66" step="0.01">
+                <span id="L0Value"> 0.66</span>
+            </div>
+            <div class="control-group">
+                <label for="kInput">Constante del resorte (k):</label>
+                <input type="range" id="kInput" min="10" max="100" value="50" step="5">
+                <span id="kValue">50</span>
+            </div>
+            <div class="control-group">
+                <label for="mInput">Masa (m):</label>
+                <input type="range" id="mInput" min="0.1" max="10" value="1" step="0.1">
+                <span id="mValue">1</span>
+            </div>
+            <div class="control-group">
+                <label for="cInput">Coeficiente de amortiguamiento (c):</label>
+                <input type="range" id="cInput" min="0.1" max="10" value="1" step="0.1">
+                <span id="cValue">1</span>
+            </div>
+
+            <div class="button-group">
+                <button id="startButton">Iniciar Simulación</button>
+                <button id="stopButton">Detener Simulación</button>
+                <button id="resetButton">Reiniciar Valores</button>
+            </div>
+
+            <div class="control-group">
+                <label>Altura total del resorte:</label>
+                <span id="springHeightValue">0</span>
+            </div>
+
+        </div>
+        <div id="ruler"></div>
+        <div id="rendererContainer"></div>
+        <script>
+            let scene, camera, renderer, spring, animationId;
+            let L0 = 0.6, k = 50, m = 1, c = 1, turns = 2.2, separation = 0.3;
+            let resultados;
+
+            function init() {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.2, 100);
+                camera.position.set(1.2, -3.1, 16); 
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor(0xa8edea, 1); // Fondo claro
+                document.getElementById("rendererContainer").appendChild(renderer.domElement);
+
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+
+                const light = new THREE.DirectionalLight(0xffffff, 1);
+                light.position.set(5, 5, 5);
+                scene.add(light);
+
+                updateSpring();
+                createRuler();
+
+                // Renderizar la escena una vez para mostrar el resorte quieto
+                renderer.render(scene, camera);
+            }
+
+
+            function calculateHeightUp(){
+                nSeparation=L0/turns;
+                if (0.3 > nSeparation | 0.6 < nSeparation){
+                    turns = turns + 1.1;
+                }else{
+                    separation = nSeparation;
+                }
+            }
+
+            function calculateHeightDown(){
+                nSeparation=L0/turns;
+                if (0.3 > nSeparation | 0.6 < nSeparation){
+                    turns = turns -1.1;
+                }else{
+                    separation = nSeparation;
+                }
+            }
+
+            function calculateHeight(){
+                separation=L0/turns
+                updateSpring();
+            }
+
+    
+           async function  startSimulation() {
+                
+               await simularResorte(L0,k,m,c)
+
+                let i=0
+                async function iterarLista() {
+                    if (i < resultados.length) {
+                        L0 = resultados[i][1];
+                       await calculateHeight();
+                        i++;
+                        setTimeout(iterarLista, 10); // Espera 0.1 segundos antes de la siguiente iteración
+                    }
+                }
+
+                iterarLista();
+            }
+
+            function createSpring(radius = 1, segments = 100) {
+                const height = turns * separation; // Ajusta la altura total según L0
+
+                document.getElementById("springHeightValue").innerText = (height).toFixed(2);
+                const path = new THREE.Curve();
+                path.getPoint = function (t) {
+                    const angle = (t * turns * Math.PI * 2)+1.5;
+                    return new THREE.Vector3(
+                        radius * Math.cos(angle),
+                        -t * height,
+                        radius * Math.sin(angle)
+                    );
+                };
+
+                const geometry = new THREE.TubeGeometry(path, segments, 0.1, 10, false);
+                const material = new THREE.MeshStandardMaterial({ color: 0x007bff });
+                const springMesh = new THREE.Mesh(geometry, material);
+                return springMesh;
+            }
+
+            function updateSpring() {
+                if (spring) scene.remove(spring);
+                spring = createSpring();
+                spring.scale.set(0.5, 0.5, 0.5);
+                scene.add(spring);
+                renderer.render(scene, camera); 
+            }
+
+            function animate() {
+                animationId = requestAnimationFrame(animate);
+                renderer.render(scene, camera);
+            }
+
+            function stopAnimation() {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+            }
+
+            function resetValues() {
+                // Reiniciar valores iniciales
+                L0 = 0.5; k = 50; m = 1; c = 1; turns = 10;
+                document.getElementById("L0Input").value = L0;
+                document.getElementById("L0Value").innerText = L0;
+                document.getElementById("kInput").value = k;
+                document.getElementById("kValue").innerText = k;
+                document.getElementById("mInput").value = m;
+                document.getElementById("mValue").innerText = m;
+                document.getElementById("cInput").value = c;
+                document.getElementById("cValue").innerText = c;
+                document.getElementById("turnsInput").value = turns;
+                document.getElementById("turnsValue").innerText = turns;
+                updateSpring();
+            }
+
+            function simularResorte(L0, k, m, c) {
+                const dt = 0.01; // paso de tiempo (s)
+                const g = 9.81; // aceleración de la gravedad (m/s²)
+
+                // condiciones iniciales
+                let t = 0.0; // tiempo inicial
+                let x = L0;  // posicion inicial: resorte sin carga
+                let v = 0.0; // velocidad inicial
+
+                resultados = []; // [tiempo, posicion]
+
+                while (true) {
+                    // aceleracion
+                    const a = (m * g - k * (x - L0) - c * v) / m;
+
+                    // velocidad
+                    v = v + a * dt;
+                    // posicion
+                    const x_new = x + v * dt;
+
+                    t = t + dt;
+
+                    resultados.push([t, x_new]);
+
+                    if (Math.round(x_new * 1e8) === Math.round(x * 1e8)) {
+                        break;
+                    }
+
+                    x = x_new;
+                }
+
+                return resultados;
+            }
+
+
+
+            document.getElementById("L0Input").addEventListener("input", function () {
+                nL0 = parseFloat(this.value);
+                document.getElementById("L0Value").innerText = nL0;
+                if(nL0 > L0){
+                    L0=nL0
+                    calculateHeightUp();
+                }else{
+                    L0=nL0
+                    calculateHeightDown();
+                }
+                updateSpring();
+            });
+
+            document.getElementById("kInput").addEventListener("input", function () {
+                k = parseFloat(this.value);
+                document.getElementById("kValue").innerText = k;
+            });
+
+            document.getElementById("mInput").addEventListener("input", function () {
+                m = parseFloat(this.value);
+                document.getElementById("mValue").innerText = m;
+            });
+
+            document.getElementById("cInput").addEventListener("input", function () {
+                c = parseFloat(this.value);
+                document.getElementById("cValue").innerText = c;
+            });
+
+
+
+            document.getElementById("startButton").addEventListener("click", function () {
+                startSimulation()
+            });
+
+            document.getElementById("stopButton").addEventListener("click", function () {
+                stopAnimation();
+            });
+
+            document.getElementById("resetButton").addEventListener("click", function () {
+                resetValues();
+            });
+
+            window.addEventListener("resize", () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            function createRuler() {
+                const ruler = document.getElementById("ruler");
+                for (let i = 0; i <= 10; i++) {
+                    const mark = document.createElement("div");
+                    mark.classList.add("ruler-mark");
+                    const label = document.createElement("div");
+                    label.classList.add("ruler-label");
+                    label.innerText = (10 - i) * 0.5 + "cm";
+                    mark.appendChild(label);
+                    ruler.appendChild(mark);
+                }
+            }
+
+            init();
+        </script>
+    </body>
+    </html>
