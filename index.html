@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resorte en Three.js</title>
+    <title>Simulador de Resorte</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
-            background-color: white;
+            background-color: #f4f4f9;
             margin: 0;
             overflow: hidden;
+            font-family: 'Arial', sans-serif;
             display: flex;
         }
         #controls {
@@ -17,9 +18,47 @@
             left: 10px;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.8);
+            background: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            width: 250px;
+        }
+        #controls label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+        #controls input[type="range"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        #controls span {
+            font-size: 14px;
+            color: #555;
+            margin-left: 5px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            margin-top: 10px;
             padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #007bff;
+            border: none;
             border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:active {
+            background-color: #003f7f;
         }
     </style>
 </head>
@@ -29,14 +68,18 @@
         <input type="range" id="turns" min="1" max="20" value="7" step="1">
         <span id="turnsValue">7</span>
 
-        <label for="separation">prueba:</label>
+        <label for="separation">Separación:</label>
         <input type="range" id="separation" min="0.4" max="3" value="0.4" step="0.1">
         <span id="separationValue">0.4</span>
+
+        <button id="startButton">Iniciar Simulación</button>
+        <button id="stopButton">Detener Simulación</button>
+        <button id="resetButton">Reiniciar Valores</button>
     </div>
     <script>
-        let scene, camera, renderer, spring;
-        let separation=0.4;
-        let turns=7;
+        let scene, camera, renderer, spring, animationId;
+        let separation = 0.4;
+        let turns = 7;
 
         function init() {
             scene = new THREE.Scene();
@@ -44,7 +87,7 @@
             camera.position.set(0, -4, 16);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setClearColor(0xffffff, 1);
+            renderer.setClearColor(0xf4f4f9, 1);
             document.body.appendChild(renderer.domElement);
 
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -53,17 +96,18 @@
             const light = new THREE.DirectionalLight(0xffffff, 1);
             light.position.set(5, 5, 5);
             scene.add(light);
-            
-            updateSpring(7); 
 
-            animate();
+            updateSpring();
+
+            // Renderizar la escena una vez para mostrar el resorte quieto
+            renderer.render(scene, camera);
         }
 
         function createSpring(radius = 1, segments = 100) {
-            const height =turns * separation; // Ajusta la altura total
+            const height = turns * separation; // Ajusta la altura total
             const path = new THREE.Curve();
             path.getPoint = function (t) {
-                const angle = (t * turns * Math.PI * 2)+1.5;
+                const angle = (t * turns * Math.PI * 2) + 1.5;
                 return new THREE.Vector3(
                     radius * Math.cos(angle),
                     -t * height, // Crece hacia abajo sin mover su posición
@@ -72,47 +116,69 @@
             };
 
             const geometry = new THREE.TubeGeometry(path, segments, 0.1, 10, false);
-            const material = new THREE.MeshStandardMaterial({ color: 0xb0afaf });
+            const material = new THREE.MeshStandardMaterial({ color: 0x007bff });
             const springMesh = new THREE.Mesh(geometry, material);
             return springMesh;
-        }
-
-        function addCube() {
-            const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-            const cubeMaterials =  new THREE.MeshStandardMaterial({ color: 0xfd8484 })
-            const cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
-            cube.position.y = -4; // Posicionar el cubo justo debajo del resorte
-            scene.add(cube);
         }
 
         function updateSpring() {
             if (spring) scene.remove(spring);
             spring = createSpring();
             scene.add(spring);
-            spring.scale.set(0.5, 0.5, 0.5); 
-            
+            spring.scale.set(0.5, 0.5, 0.5);
         }
 
         function animate() {
-            requestAnimationFrame(animate);
+            animationId = requestAnimationFrame(animate);
             renderer.render(scene, camera);
+        }
+
+        function stopAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+
+        function resetValues() {
+            // Reiniciar valores iniciales
+            turns = 7;
+            separation = 0.4;
+            document.getElementById("turns").value = turns;
+            document.getElementById("turnsValue").innerText = turns;
+            document.getElementById("separation").value = separation;
+            document.getElementById("separationValue").innerText = separation;
+            updateSpring();
+            renderer.render(scene, camera); // Renderizar la escena después de reiniciar
         }
 
         document.getElementById("turns").addEventListener("input", function () {
             const eTurns = parseInt(this.value);
             document.getElementById("turnsValue").innerText = eTurns;
-            turns = eTurns
+            turns = eTurns;
             updateSpring();
+            renderer.render(scene, camera); // Renderizar la escena después de actualizar
         });
 
         document.getElementById("separation").addEventListener("input", function () {
             const eSeparation = parseFloat(this.value);
             document.getElementById("separationValue").innerText = eSeparation;
-            separation= eSeparation
+            separation = eSeparation;
             updateSpring();
+            renderer.render(scene, camera); // Renderizar la escena después de actualizar
         });
 
+        document.getElementById("startButton").addEventListener("click", function () {
+            animate();
+        });
 
+        document.getElementById("stopButton").addEventListener("click", function () {
+            stopAnimation();
+        });
+
+        document.getElementById("resetButton").addEventListener("click", function () {
+            resetValues();
+        });
 
         window.addEventListener("resize", () => {
             camera.aspect = window.innerWidth / window.innerHeight;
