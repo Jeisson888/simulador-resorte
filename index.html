@@ -7,44 +7,53 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
-            background-color: #f4f4f9;
+            background: linear-gradient(135deg, #a8edea, #fed6e3); /* Fondo degradado */
             margin: 0;
             overflow: hidden;
             font-family: 'Arial', sans-serif;
             display: flex;
+            flex-direction: row; /* Controles al lado del render */
+            height: 100vh;
+        }
+        #rendererContainer {
+            flex: 3; /* Ocupa más espacio que los controles */
+            width: 100%;
         }
         #controls {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: #ffffff;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 20px; /* Espaciado entre elementos */
+            background: rgba(255, 255, 255, 0.9);
             padding: 20px;
             border-radius: 10px;
-            width: 250px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            height: 100%; /* Asegura que ocupe toda la altura */
         }
-        #controls label {
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .control-group label {
             font-size: 14px;
             font-weight: bold;
             color: #333;
-            display: block;
             margin-bottom: 5px;
         }
-        #controls input[type="range"] {
+        .control-group input[type="range"] {
             width: 100%;
-            margin-bottom: 10px;
         }
-        #controls span {
-            font-size: 14px;
-            color: #555;
-            margin-left: 5px;
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Espaciado entre botones */
         }
         button {
-            display: block;
-            width: 100%;
-            margin-top: 10px;
-            padding: 10px;
+            padding: 10px 20px;
             font-size: 14px;
             font-weight: bold;
             color: #ffffff;
@@ -64,31 +73,50 @@
 </head>
 <body>
     <div id="controls">
-        <label for="turns">Vueltas:</label>
-        <input type="range" id="turns" min="1" max="20" value="7" step="1">
-        <span id="turnsValue">7</span>
-
-        <label for="separation">Separación:</label>
-        <input type="range" id="separation" min="0.4" max="3" value="0.4" step="0.1">
-        <span id="separationValue">0.4</span>
-
-        <button id="startButton">Iniciar Simulación</button>
-        <button id="stopButton">Detener Simulación</button>
-        <button id="resetButton">Reiniciar Valores</button>
+        <div class="control-group">
+            <label for="L0Input">Longitud sin carga (L0):</label>
+            <input type="range" id="L0Input" min="0.1" max="5" value="0.5" step="0.1">
+            <span id="L0Value">0.5</span>
+        </div>
+        <div class="control-group">
+            <label for="kInput">Constante del resorte (k):</label>
+            <input type="range" id="kInput" min="10" max="100" value="50" step="5">
+            <span id="kValue">50</span>
+        </div>
+        <div class="control-group">
+            <label for="mInput">Masa (m):</label>
+            <input type="range" id="mInput" min="0.1" max="10" value="1" step="0.1">
+            <span id="mValue">1</span>
+        </div>
+        <div class="control-group">
+            <label for="cInput">Coeficiente de amortiguamiento (c):</label>
+            <input type="range" id="cInput" min="0.1" max="10" value="1" step="0.1">
+            <span id="cValue">1</span>
+        </div>
+        <div class="control-group">
+            <label for="turnsInput">Vueltas:</label>
+            <input type="range" id="turnsInput" min="1" max="20" value="10" step="1">
+            <span id="turnsValue">10</span>
+        </div>
+        <div class="button-group">
+            <button id="startButton">Iniciar Simulación</button>
+            <button id="stopButton">Detener Simulación</button>
+            <button id="resetButton">Reiniciar Valores</button>
+        </div>
     </div>
+    <div id="rendererContainer"></div>
     <script>
         let scene, camera, renderer, spring, animationId;
-        let separation = 0.4;
-        let turns = 7;
+        let L0 = 0.5, k = 50, m = 1, c = 1, turns = 10;
 
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.2, 100);
-            camera.position.set(0, -4, 16);
+            camera.position.set(0, -3, 16); // Ajustar la cámara para centrar el resorte en la parte superior
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setClearColor(0xf4f4f9, 1);
-            document.body.appendChild(renderer.domElement);
+            renderer.setClearColor(0xa8edea, 1); // Fondo claro
+            document.getElementById("rendererContainer").appendChild(renderer.domElement);
 
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
@@ -104,13 +132,13 @@
         }
 
         function createSpring(radius = 1, segments = 100) {
-            const height = turns * separation; // Ajusta la altura total
+            const height = L0; // Ajusta la altura total según L0
             const path = new THREE.Curve();
             path.getPoint = function (t) {
-                const angle = (t * turns * Math.PI * 2) + 1.5;
+                const angle = (t * turns * Math.PI * 2);
                 return new THREE.Vector3(
                     radius * Math.cos(angle),
-                    -t * height, // Crece hacia abajo sin mover su posición
+                    -t * height,
                     radius * Math.sin(angle)
                 );
             };
@@ -125,7 +153,7 @@
             if (spring) scene.remove(spring);
             spring = createSpring();
             scene.add(spring);
-            spring.scale.set(0.5, 0.5, 0.5);
+            renderer.render(scene, camera); // Renderizar después de añadir el resorte
         }
 
         function animate() {
@@ -142,30 +170,45 @@
 
         function resetValues() {
             // Reiniciar valores iniciales
-            turns = 7;
-            separation = 0.4;
-            document.getElementById("turns").value = turns;
+            L0 = 0.5; k = 50; m = 1; c = 1; turns = 10;
+            document.getElementById("L0Input").value = L0;
+            document.getElementById("L0Value").innerText = L0;
+            document.getElementById("kInput").value = k;
+            document.getElementById("kValue").innerText = k;
+            document.getElementById("mInput").value = m;
+            document.getElementById("mValue").innerText = m;
+            document.getElementById("cInput").value = c;
+            document.getElementById("cValue").innerText = c;
+            document.getElementById("turnsInput").value = turns;
             document.getElementById("turnsValue").innerText = turns;
-            document.getElementById("separation").value = separation;
-            document.getElementById("separationValue").innerText = separation;
             updateSpring();
-            renderer.render(scene, camera); // Renderizar la escena después de reiniciar
         }
 
-        document.getElementById("turns").addEventListener("input", function () {
-            const eTurns = parseInt(this.value);
-            document.getElementById("turnsValue").innerText = eTurns;
-            turns = eTurns;
+        document.getElementById("L0Input").addEventListener("input", function () {
+            L0 = parseFloat(this.value);
+            document.getElementById("L0Value").innerText = L0;
             updateSpring();
-            renderer.render(scene, camera); // Renderizar la escena después de actualizar
         });
 
-        document.getElementById("separation").addEventListener("input", function () {
-            const eSeparation = parseFloat(this.value);
-            document.getElementById("separationValue").innerText = eSeparation;
-            separation = eSeparation;
+        document.getElementById("kInput").addEventListener("input", function () {
+            k = parseFloat(this.value);
+            document.getElementById("kValue").innerText = k;
+        });
+
+        document.getElementById("mInput").addEventListener("input", function () {
+            m = parseFloat(this.value);
+            document.getElementById("mValue").innerText = m;
+        });
+
+        document.getElementById("cInput").addEventListener("input", function () {
+            c = parseFloat(this.value);
+            document.getElementById("cValue").innerText = c;
+        });
+
+        document.getElementById("turnsInput").addEventListener("input", function () {
+            turns = parseInt(this.value);
+            document.getElementById("turnsValue").innerText = turns;
             updateSpring();
-            renderer.render(scene, camera); // Renderizar la escena después de actualizar
         });
 
         document.getElementById("startButton").addEventListener("click", function () {
