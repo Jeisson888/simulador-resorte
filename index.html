@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resorte en Three.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            background-color: white;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+        }
+        #controls {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <label for="turns">Vueltas:</label>
+        <input type="range" id="turns" min="1" max="20" value="7" step="1">
+        <span id="turnsValue">7</span>
+
+        <label for="separation">prueba:</label>
+        <input type="range" id="separation" min="0.4" max="3" value="0.4" step="0.1">
+        <span id="separationValue">0.4</span>
+    </div>
+    <script>
+        let scene, camera, renderer, spring;
+        let separation=0.4;
+        let turns=7;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.2, 100);
+            camera.position.set(0, -4, 16);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0xffffff, 1);
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(5, 5, 5);
+            scene.add(light);
+            
+            updateSpring(7); 
+
+            animate();
+        }
+
+        function createSpring(radius = 1, segments = 100) {
+            const height =turns * separation; // Ajusta la altura total
+            const path = new THREE.Curve();
+            path.getPoint = function (t) {
+                const angle = (t * turns * Math.PI * 2)+1.5;
+                return new THREE.Vector3(
+                    radius * Math.cos(angle),
+                    -t * height, // Crece hacia abajo sin mover su posición
+                    radius * Math.sin(angle)
+                );
+            };
+
+            const geometry = new THREE.TubeGeometry(path, segments, 0.1, 10, false);
+            const material = new THREE.MeshStandardMaterial({ color: 0xb0afaf });
+            const springMesh = new THREE.Mesh(geometry, material);
+            return springMesh;
+        }
+
+        function addCube() {
+            const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const cubeMaterials =  new THREE.MeshStandardMaterial({ color: 0xfd8484 })
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+            cube.position.y = -4; // Posicionar el cubo justo debajo del resorte
+            scene.add(cube);
+        }
+
+        function updateSpring() {
+            if (spring) scene.remove(spring);
+            spring = createSpring();
+            scene.add(spring);
+            spring.scale.set(0.5, 0.5, 0.5); 
+            
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        document.getElementById("turns").addEventListener("input", function () {
+            const eTurns = parseInt(this.value);
+            document.getElementById("turnsValue").innerText = eTurns;
+            turns = eTurns
+            updateSpring();
+        });
+
+        document.getElementById("separation").addEventListener("input", function () {
+            const eSeparation = parseFloat(this.value);
+            document.getElementById("separationValue").innerText = eSeparation;
+            separation= eSeparation
+            updateSpring();
+        });
+
+
+
+        window.addEventListener("resize", () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+    </script>
+</body>
+</html>
