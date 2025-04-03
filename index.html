@@ -153,7 +153,7 @@
             function init() {
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.2, 100);
-                camera.position.set(1.2, -3.1, 16); 
+                camera.position.set(1.2, -3.08, 15); 
                 renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setClearColor(0xa8edea, 1); // Fondo claro
@@ -270,7 +270,27 @@
                 const geometry = new THREE.TubeGeometry(path, segments, 0.1, 10, false);
                 const material = new THREE.MeshStandardMaterial({ color: 0x007bff });
                 const springMesh = new THREE.Mesh(geometry, material);
-                return springMesh;
+
+                const cubeSize = radius * 1.5; 
+                const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+                const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+                const cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                cubeMesh.position.set(0, -height - (cubeSize / 2), 0);
+
+
+                const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(-900, -height, 0), // Punto izquierdo
+                    new THREE.Vector3(900, -height, 0)   // Punto derecho
+                ]);
+                const line = new THREE.Line(lineGeometry, lineMaterial);
+
+                const springGroup = new THREE.Group();
+                springGroup.add(springMesh);
+                springGroup.add(cubeMesh)
+                springGroup.add(line)
+
+                return springGroup;
             }
 
             function updateSpring() {
@@ -409,7 +429,7 @@
                     mark.classList.add("ruler-mark");
                     const label = document.createElement("div");
                     label.classList.add("ruler-label");
-                    label.innerText = (10 - i) * 0.5 + "cm";
+                    label.innerText = (0 + i) * 1 + "m";
                     mark.appendChild(label);
                     ruler.appendChild(mark);
                 }
