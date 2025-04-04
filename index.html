@@ -199,7 +199,6 @@
             }
 
 
-
             function calculateHeightUp(){
                 nSeparation=L0/turns;
                 if (0.3 > nSeparation | 0.6 < nSeparation){
@@ -459,15 +458,15 @@
 
 
 
-            document.getElementById("L0Input").addEventListener("input", function () {
+            document.getElementById("L0Input").addEventListener("input",async function () {
                 nL0 = parseFloat(this.value);
                 document.getElementById("L0Value").innerText = nL0;
                 if(nL0 > L0){
                     L0=nL0
-                    calculateHeightUp();
+                   await calculateHeightUp();
                 }else{
                     L0=nL0
-                    calculateHeightDown();
+                   await calculateHeightDown();
                 }
                 updateSpring();
             });
@@ -535,7 +534,7 @@
 
                 loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
 
-                    for (let i = 0; i < 10; i++) {
+                    for (let i = 0; i < 13; i++) {
                         const textGeometry = new THREE.TextGeometry(i.toString(), {
                             font: font,
                             size: 0.15,
@@ -546,8 +545,8 @@
 
                         const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
                         const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-                            new THREE.Vector3(-4.8, y, 0),
-                            new THREE.Vector3(-4.5, y, 0)
+                            new THREE.Vector3(-4.7, y, 0),
+                            new THREE.Vector3(-4.4, y, 0)
                         ]);
                         let ruleLine = new THREE.Line(lineGeometry, lineMaterial);
 
@@ -556,8 +555,8 @@
                             const subY = y - j * 0.1;
                             const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
                              const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-                            new THREE.Vector3(-4.8, subY, 0),
-                            new THREE.Vector3(-4.7, subY, 0)
+                            new THREE.Vector3(-4.7, subY, 0),
+                            new THREE.Vector3(-4.6, subY, 0)
                         ]);
                             let ruleLine = new THREE.Line(lineGeometry, lineMaterial);
                             rulerGroup.add(ruleLine);
