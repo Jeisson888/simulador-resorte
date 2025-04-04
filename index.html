@@ -174,6 +174,7 @@
         <script>
             let scene, camera, renderer, spring, animationId;
             let L0 = 0.6, k = 50, m = 1, c = 1, turns = 2.2, separation = 0.3, speed=10;
+            let xEquilibrioTeorico = 0;
             let resultados;
 
             function init() {
@@ -234,6 +235,7 @@
             let i = 0;
 
             async function startSimulation() {
+                await calcularEquilibrio(L0,k,m);
                 await simularResorte(L0, k, m, c);
                 i = 0; // Reiniciar el índice en caso de reiniciar la simulación
                 disableButtons();
@@ -364,11 +366,9 @@
             function showEqLine() {
                 if (!resultados.length) return;
 
-                const eqL0 = resultados[resultados.length-1][1];
-                
-                const nSeparation= eqL0 / turns
+               
 
-                const eqHeight = turns * nSeparation
+                const eqHeight = xEquilibrioTeorico
 
                 if (eqLine) {
                     scene.remove(eqLine);
@@ -472,6 +472,11 @@
                 }
 
                 return resultados;
+            }
+
+            function calcularEquilibrio(L0, k, m) {
+                const g = 9.81; // aceleración de la gravedad (m/s²)
+                xEquilibrioTeorico = L0 + (m * g) / k;
             }
 
 
