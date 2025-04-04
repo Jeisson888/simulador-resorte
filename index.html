@@ -44,6 +44,8 @@
                 flex: 3; /* Ocupa más espacio que los controles */
                 width: 100%;
             }
+            
+
             #controls {
                 display: flex;
                 flex-direction: column;
@@ -54,9 +56,15 @@
                 padding: 20px;
                 border-radius: 10px;
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-                width: 300px;
-                height: 100%; /* Asegura que ocupe toda la altura */
+                min-width: 370px; /* Mantiene el ancho fijo */
+                max-width: 300px;
+                max-height: 100vh; /* Limita la altura al tamaño de la pantalla */
+                overflow-y: auto; /* Agrega scroll solo si es necesario */
+                box-sizing: border-box; /* Asegura que padding no afecte el tamaño */
+                position: fixed; /* Fija su posición dentro del layout */
+                left: 0; /* Lo mantiene pegado a la izquierda */
             }
+                        
             .control-group {
                 display: flex;
                 flex-direction: column;
@@ -184,7 +192,7 @@
 
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.2, 100);
-                camera.position.set(1.2, -3, 15); 
+                camera.position.set(-2, -3, 15); 
      
                 renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -240,6 +248,8 @@
                 i = 0; // Reiniciar el índice en caso de reiniciar la simulación
                 disableButtons();
                 enableEqButton();
+                document.getElementById("eqLabel").style.display = "none";
+                document.getElementById("eqValue").style.display = "none";
                 async function iterarLista() {
                     while (i < resultados.length) {
                         if (paused) {
@@ -256,6 +266,15 @@
                 }
 
                 await iterarLista();
+
+                const button = document.getElementById("stopButton");
+                const button2 = document.getElementById("eqButton");
+                paused=false
+                button.textContent = "Pause";
+                hiddenEqLine();
+                showedEqLine=false;
+                button2.textContent="Mostrar Equilibrio Teórico"
+                updateSpring();
                 enableButtons()
                 disableEqButton()
             }
@@ -274,6 +293,7 @@
                 document.getElementById("kInput").disabled= true;
                 document.getElementById("mInput").disabled= true;
                 document.getElementById("cInput").disabled= true;
+                document.getElementById("startButton").disabled= true;
             }
 
             function enableButtons(){
@@ -281,6 +301,7 @@
                 document.getElementById("kInput").disabled= false;
                 document.getElementById("mInput").disabled= false;
                 document.getElementById("cInput").disabled= false;
+                document.getElementById("startButton").disabled= false;
             }
 
 
@@ -428,16 +449,8 @@
                 document.getElementById("mValue").innerText = m;
                 document.getElementById("cInput").value = c;
                 document.getElementById("cValue").innerText = c;
-                const button = document.getElementById("stopButton");
-                const button2 = document.getElementById("eqButton");
                 document.getElementById("eqLabel").style.display = "none";
                 document.getElementById("eqValue").style.display = "none";
-                paused=false
-                button.textContent = "Pause";
-                hiddenEqLine();
-                showedEqLine=false;
-                button2.textContent="Mostrar Equilibrio Teórico"
-                updateSpring();
             }
 
             function simularResorte(L0, k, m, c) {
