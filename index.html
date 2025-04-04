@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
@@ -106,7 +106,7 @@
             </div>
             <div class="control-group">
                 <label for="kInput">Constante del resorte (k):</label>
-                <input type="range" id="kInput" min="10" max="100" value="50" step="5">
+                <input type="range" id="kInput" min="10" max="1000" value="50" step="5">
                 <span id="kValue">50</span>
             </div>
             <div class="control-group">
@@ -118,6 +118,16 @@
                 <label for="cInput">Coeficiente de amortiguamiento (c):</label>
                 <input type="range" id="cInput" min="0.1" max="10" value="1" step="0.1">
                 <span id="cValue">1</span>
+            </div>
+
+            <div class="control-group">
+                <label for="materialSelect">Material del resorte:</label>
+                <select id="materialSelect">
+                    <option value="50">Acero delgado (50N/m)</option>
+                    <option value="200">Acero aleado (200N/m)</option>
+                    <option value="400">Acero al silicio-manganeso (400N/m)</option>
+                    <option value="1000">Molibdeno (1000N/m)</option>
+                </select>
             </div>
 
             <div class="button-group">
@@ -414,6 +424,13 @@
 
             document.getElementById("resetButton").addEventListener("click", function () {
                 resetValues();
+            });
+
+            document.getElementById("materialSelect").addEventListener("change", function () {
+                k = parseFloat(this.value); // Actualizar el valor de k según el material seleccionado
+                document.getElementById("kInput").value = k; // Sincronizar la barra deslizante con el valor de k
+                document.getElementById("kValue").innerText = k; // Actualizar el texto que muestra el valor de k
+                updateSpring(); // Actualizar el resorte con el nuevo valor de k
             });
 
             window.addEventListener("resize", () => {
