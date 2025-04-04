@@ -148,13 +148,18 @@
             </div>
 
             <div class="control-group">
-                <label>Altura total del resorte:</label>
+                <label>Longitud del resorte (m)</label>
                 <span id="springHeightValue">0</span>
             </div>
 
             <div class="control-group">
-                <label>Tiempo simulación</label>
+                <label>Tiempo simulación (s)</label>
                 <span id="timeSimulation">0</span>
+            </div>
+
+            <div class="control-group">
+                <label id="eqLabel">Punto de Equilibrio (m)</label>
+                <span id="eqValue">0</span>
             </div>
 
             <div class="control-group">
@@ -173,6 +178,9 @@
 
             function init() {
                 document.getElementById("eqButton").style.display = "none";
+                document.getElementById("eqLabel").style.display = "none";
+                document.getElementById("eqValue").style.display = "none";
+
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.2, 100);
                 camera.position.set(1.2, -3, 15); 
@@ -373,6 +381,8 @@
                 ]);
                 eqLine = new THREE.Line(lineGeometry, lineMaterial);
 
+                document.getElementById("eqValue").innerText = (eqHeight).toFixed(3);
+
                 scene.add(eqLine);
                 renderer.render(scene, camera);
             }
@@ -394,9 +404,15 @@
                 if (showedEqLine) {
                     button.textContent = "Ocultar Equilibrio Teórico";
                     showEqLine()
+                    document.getElementById("eqLabel").style.display = "block";
+                    document.getElementById("eqValue").style.display = "block";
+
                 } else {
                     button.textContent = "Mostrar Equilibrio Teórico";
                     hiddenEqLine()
+                    document.getElementById("eqLabel").style.display = "none";
+                    document.getElementById("eqValue").style.display = "none";
+
                 }
             }
 
@@ -414,6 +430,8 @@
                 document.getElementById("cValue").innerText = c;
                 const button = document.getElementById("stopButton");
                 const button2 = document.getElementById("eqButton");
+                document.getElementById("eqLabel").style.display = "none";
+                document.getElementById("eqValue").style.display = "none";
                 paused=false
                 button.textContent = "Pause";
                 hiddenEqLine();
